@@ -408,6 +408,8 @@ void StatementBuilder::decl_func_end()
         handle_error(TypeException{"$Return_statement_expected"});
     }
 
+    currentFun->body_position = position;
+
     /* Pop outer function block.
      */
     blocks.pop_back();
