@@ -1092,6 +1092,11 @@ void Document::add_position(uint32_t position, uint32_t offset, uint32_t line, s
 
 const position_index_t::line_t& Document::find_position(uint32_t position) const { return positions.find(position); }
 
+const position_index_t::line_t& Document::findFirstPosition(uint32_t position) const
+{
+    return positions.find_first_line(position);
+}
+
 void Document::add_error(position_t position, std::string msg, std::string context)
 {
     errors.emplace_back(positions.find(position.start), positions.find(position.end), position, std::move(msg),
