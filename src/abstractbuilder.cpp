@@ -118,6 +118,8 @@ void AbstractBuilder::decl_progress(bool) { UNSUPPORTED; }
 
 void AbstractBuilder::decl_parameter(const char* name, bool) { UNSUPPORTED; }
 
+void AbstractBuilder::func_type() { UNSUPPORTED; }
+
 void AbstractBuilder::decl_func_begin(const char* name) { UNSUPPORTED; }
 
 void AbstractBuilder::decl_func_end() { UNSUPPORTED; }
