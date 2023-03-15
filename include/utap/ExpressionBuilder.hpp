@@ -131,7 +131,7 @@ protected:
     std::map<std::string, frame_t> dynamicFrames;
 
 public:
-    explicit ExpressionBuilder(Document& doc);
+    ExpressionBuilder(Document& doc, frame_t initial_frame);
     ExpressionFragments& getExpressions();
 
     void add_position(uint32_t position, uint32_t offset, uint32_t line, std::shared_ptr<std::string> path) override;
@@ -219,6 +219,8 @@ public:
     void expr_foreach_dynamic_end(const char* name) override;
     void push_dynamic_frame_of(template_t* t, std::string name);  // no override
     void pop_dynamic_frame_of(std::string name);
+
+    void builtin_decl_end() override;
 };
 }  // namespace UTAP
 

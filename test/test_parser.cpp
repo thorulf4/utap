@@ -98,7 +98,7 @@ class QueryBuilder : public UTAP::StatementBuilder
     UTAP::TypeChecker checker;
 
 public:
-    explicit QueryBuilder(UTAP::Document& doc): UTAP::StatementBuilder{doc}, checker{doc} {}
+    explicit QueryBuilder(UTAP::Document& doc): UTAP::StatementBuilder{doc, doc.get_globals().frame}, checker{doc} {}
     void property() override
     {
         REQUIRE(fragments.size() > 0);
@@ -186,4 +186,25 @@ TEST_CASE("Parsing implicit goals for learning queries")
         builder->typecheck();
         REQUIRE(doc->get_errors().size() == 0);
     }
+}
+
+TEST_CASE("Test builtin-, global-, system-declarations structure")
+{
+    // We expect the following frame structure
+    // - Builtin declarations
+    //     - Global declarations
+    //         - Templates
+    //         - System declarations
+
+    std::unique_ptr<UTAP::Document> doc = read_document("simpleSystem.xml");
+    UTAP::frame_t frame = doc->get_globals().frame;
+    UTAP::frame_t sys_frame = doc->get_system_declarations().frame;
+    CHECK(frame.get_size() == 6);
+    CHECK(frame.has_parent());
+
+    for (UTAP::template_t& templ : doc->get_templates())
+        CHECK((templ.frame.get_parent() == frame) == true);
+
+    REQUIRE(sys_frame.has_parent());
+    CHECK((sys_frame.get_parent() == frame) == true);
 }

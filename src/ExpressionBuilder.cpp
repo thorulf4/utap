@@ -59,9 +59,10 @@ void ExpressionBuilder::ExpressionFragments::pop(uint32_t n)
         pop();
 }
 
-ExpressionBuilder::ExpressionBuilder(Document& doc): document{doc}
+ExpressionBuilder::ExpressionBuilder(Document& doc, frame_t frame): document{doc}
 {
-    push_frame(document.get_globals().frame);
+    assert(frame != frame_t{});
+    push_frame(std::move(frame));
     scalar_count = 0;
 }
 
@@ -78,6 +79,8 @@ void ExpressionBuilder::handle_warning(const TypeException& ex) { document.add_w
 void ExpressionBuilder::push_frame(frame_t frame) { frames.push(std::move(frame)); }
 
 void ExpressionBuilder::popFrame() { frames.pop(); }
+
+void ExpressionBuilder::builtin_decl_end() { push_frame(document.get_globals().frame); }
 
 bool ExpressionBuilder::resolve(const std::string& name, symbol_t& uid) const
 {

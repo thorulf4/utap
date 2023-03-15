@@ -40,8 +40,8 @@ using namespace Constants;
 using std::vector;
 using std::string;
 
-StatementBuilder::StatementBuilder(Document& doc, std::vector<std::filesystem::path> libpaths):
-    ExpressionBuilder{doc}, libpaths{std::move(libpaths)}
+StatementBuilder::StatementBuilder(Document& doc, frame_t initial_frame, std::vector<std::filesystem::path> libpaths):
+    ExpressionBuilder{doc, initial_frame}, libpaths{std::move(libpaths)}
 {
     this->libpaths.insert(this->libpaths.begin(), std::filesystem::current_path());
     this->libpaths.insert(this->libpaths.begin(), "");

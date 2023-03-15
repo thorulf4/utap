@@ -68,7 +68,7 @@ protected:
     static void collectDependencies(std::set<symbol_t>&, type_t);
 
 public:
-    explicit StatementBuilder(Document&, std::vector<std::filesystem::path> libpaths = {});
+    StatementBuilder(Document&, frame_t initial_frame, std::vector<std::filesystem::path> libpaths = {});
     StatementBuilder(const StatementBuilder&) = delete;
     ~StatementBuilder() noexcept override;
 

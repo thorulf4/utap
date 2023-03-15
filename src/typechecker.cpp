@@ -2649,7 +2649,7 @@ int32_t parse_XML_fd(int fd, Document* doc, bool newxta, const std::vector<std::
 
 expression_t parseExpression(const char* str, Document* doc, bool newxtr)
 {
-    ExpressionBuilder builder{*doc};
+    ExpressionBuilder builder{*doc, doc->get_globals().frame};
     parse_XTA(str, &builder, newxtr, S_EXPRESSION, "");
     expression_t expr = builder.getExpressions()[0];
     if (!doc->has_errors()) {
