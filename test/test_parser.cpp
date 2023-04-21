@@ -14,6 +14,8 @@
  * Created on 20 August 2021, 09:47
  */
 
+#include "document_fixture.h"
+
 #include "utap/StatementBuilder.hpp"
 #include "utap/typechecker.h"
 #include "utap/utap.h"
@@ -207,4 +209,12 @@ TEST_CASE("Test builtin-, global-, system-declarations structure")
 
     REQUIRE(sys_frame.has_parent());
     CHECK((sys_frame.get_parent() == frame) == true);
+}
+
+TEST_CASE("Heap-use-after-free reported by ASAN due to double free")
+{
+    auto f = document_fixture{};
+    f.add_global_decl("void f(){ int x = }");
+
+    auto doc = f.parse();
 }
