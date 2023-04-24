@@ -71,6 +71,8 @@ public:
     StatementBuilder(Document&, frame_t initial_frame, std::vector<std::filesystem::path> libpaths = {});
     StatementBuilder(const StatementBuilder&) = delete;
 
+    BlockStatement& get_block();
+
     void type_array_of_size(size_t) override;
     void type_array_of_type(size_t) override;
     void type_struct(PREFIX, uint32_t fields) override;

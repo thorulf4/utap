@@ -596,7 +596,7 @@ VariableDecl:
         Type DeclIdList ';' {
             CALL(@1, @3, type_pop());
         }
-        | Type error ';'
+        | Type error
         ;
 
 DeclIdList:
@@ -652,7 +652,7 @@ TypeDecl:
         T_TYPEDEF Type TypeIdList ';' {
           CALL(@1, @4, type_pop());
         }
-        | T_TYPEDEF error ';'
+        | T_TYPEDEF error
         ;
 
 TypeIdList:

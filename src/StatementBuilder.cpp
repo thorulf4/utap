@@ -354,9 +354,7 @@ void StatementBuilder::func_type()
          * https://github.com/UPPAALModelChecker/uppaal/issues/402
          */
         currentFun = nullptr;
-        while (!blocks.empty()) {
-            blocks.pop_back();
-        }
+        blocks.clear();
     }
 
     type_t return_type = typeFragments[0];
@@ -388,22 +386,19 @@ void StatementBuilder::decl_func_begin(const char* name)
 
     /* Create function block.
      */
-    blocks.push_back(std::make_unique<BlockStatement>(frames.top()));
+    currentFun->body = std::make_unique<BlockStatement>(frames.top());
 }
+
+BlockStatement& StatementBuilder::get_block() { return blocks.empty() ? *currentFun->body : *blocks.back(); }
 
 void StatementBuilder::decl_func_end()
 {
-    assert(!blocks.empty());
+    assert(currentFun->body);
     assert(currentFun);
 
     /* Recover from unterminated blocks - delete any excess blocks.
      */
-    while (blocks.size() > 1) {
-        blocks.pop_back();
-    }
-
-    currentFun->body = std::move(blocks.back());
-    blocks.pop_back();
+    blocks.clear();
 
     /* If function has a non void return type, then check that last
      * statement is a return statement.
@@ -478,7 +473,7 @@ void StatementBuilder::decl_external_func(const char* name, const char* alias)
     }
     push_frame(frame_t::create(frames.top()));
     params.move_to(frames.top());  // params is emptied here
-    blocks.push_back(std::make_unique<ExternalBlockStatement>(frames.top(), fp, !return_type.is_void()));
+    currentFun->body = std::make_unique<ExternalBlockStatement>(frames.top(), fp, !return_type.is_void());
     decl_func_end();
 }
 
@@ -497,21 +492,21 @@ void StatementBuilder::block_end()
     // the containing block.
     std::unique_ptr<BlockStatement> block = std::move(blocks.back());
     blocks.pop_back();
-    blocks.back()->push_stat(std::move(block));
+    get_block().push_stat(std::move(block));
 
     // Restore containing frame
     popFrame();
 }
 
-void StatementBuilder::empty_statement() { blocks.back()->push_stat(std::make_unique<EmptyStatement>()); }
+void StatementBuilder::empty_statement() { get_block().push_stat(std::make_unique<EmptyStatement>()); }
 
 void StatementBuilder::for_begin() {}
 
 void StatementBuilder::for_end()
 {  // 3 expr, 1 stat
-    auto substat = blocks.back()->pop_stat();
+    auto substat = get_block().pop_stat();
     auto forstat = std::make_unique<ForStatement>(fragments[2], fragments[1], fragments[0], std::move(substat));
-    blocks.back()->push_stat(std::move(forstat));
+    get_block().push_stat(std::move(forstat));
 
     fragments.pop(3);
 }
@@ -539,19 +534,19 @@ void StatementBuilder::iteration_begin(const char* name)
      * this here as the statement is the only thing that can keep the
      * reference to the frame.
      */
-    blocks.back()->push_stat(std::make_unique<IterationStatement>(variable->uid, frames.top(), nullptr));
+    get_block().push_stat(std::make_unique<IterationStatement>(variable->uid, frames.top(), nullptr));
 }
 
 void StatementBuilder::iteration_end(const char* name)
 {
     /* Retrieve the statement that we iterate over.
      */
-    auto statement = blocks.back()->pop_stat();
+    auto statement = get_block().pop_stat();
 
-    if (!blocks.back()->empty()) {
+    if (!get_block().empty()) {
         // If the syntax is wrong, we won't have anything in blocks.back()
         /* Add statement to loop construction.  */
-        static_cast<IterationStatement*>(blocks.back()->back())->stat = std::move(statement);
+        static_cast<IterationStatement*>(get_block().back())->stat = std::move(statement);
     }
 
     /* Restore the frame pointer.
@@ -563,8 +558,8 @@ void StatementBuilder::while_begin() {}
 
 void StatementBuilder::while_end()
 {  // 1 expr, 1 stat
-    auto whilestat = std::make_unique<WhileStatement>(fragments[0], blocks.back()->pop_stat());
-    blocks.back()->push_stat(std::move(whilestat));
+    auto whilestat = std::make_unique<WhileStatement>(fragments[0], get_block().pop_stat());
+    get_block().push_stat(std::move(whilestat));
     fragments.pop();
 }
 
@@ -572,8 +567,8 @@ void StatementBuilder::do_while_begin() {}
 
 void StatementBuilder::do_while_end()
 {  // 1 stat, 1 expr
-    auto substat = blocks.back()->pop_stat();
-    blocks.back()->push_stat(std::make_unique<DoWhileStatement>(std::move(substat), fragments[0]));
+    auto substat = get_block().pop_stat();
+    get_block().push_stat(std::make_unique<DoWhileStatement>(std::move(substat), fragments[0]));
     fragments.pop();
 }
 
@@ -581,16 +576,16 @@ void StatementBuilder::if_end(bool elsePart)
 {  // 1 expr, 1 or 2 statements
     std::unique_ptr<Statement> falseCase;
     if (elsePart)
-        falseCase = blocks.back()->pop_stat();
-    auto trueCase = blocks.back()->pop_stat();
+        falseCase = get_block().pop_stat();
+    auto trueCase = get_block().pop_stat();
     auto ifstat = std::make_unique<IfStatement>(fragments[0], std::move(trueCase), std::move(falseCase));
-    blocks.back()->push_stat(std::move(ifstat));
+    get_block().push_stat(std::move(ifstat));
     fragments.pop();
 }
 
 void StatementBuilder::expr_statement()
 {  // 1 expr
-    blocks.back()->push_stat(std::make_unique<ExprStatement>(fragments[0]));
+    get_block().push_stat(std::make_unique<ExprStatement>(fragments[0]));
     fragments.pop();
 }
 
@@ -616,13 +611,13 @@ void StatementBuilder::return_statement(bool args)
         } else {
             stat = std::make_unique<ReturnStatement>();
         }
-        blocks.back()->push_stat(std::move(stat));
+        get_block().push_stat(std::move(stat));
     }
 }
 
 void StatementBuilder::assert_statement()
 {
-    blocks.back()->push_stat(std::make_unique<AssertStatement>(fragments[0]));
+    get_block().push_stat(std::make_unique<AssertStatement>(fragments[0]));
     fragments.pop();
 }
 
